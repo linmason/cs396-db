@@ -63,7 +63,14 @@ router.route("/doctors/favorites")
 router.route("/doctors/:id")
     .get((req, res) => {
         console.log(`GET /doctors/${req.params.id}`);
-        res.status(501).send();
+
+        Doctor.findById(req.params.id)
+            .then(data => {
+                res.status(200).send(data);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            });
     })
     .patch((req, res) => {
         console.log(`PATCH /doctors/${req.params.id}`);
@@ -77,14 +84,53 @@ router.route("/doctors/:id")
 router.route("/doctors/:id/companions")
     .get((req, res) => {
         console.log(`GET /doctors/${req.params.id}/companions`);
-        res.status(501).send();
+
+        Companion.find({"doctors": req.params.id})
+            .then(data => {
+                res.status(200).send(data);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
     });
     
 
 router.route("/doctors/:id/goodparent")
     .get((req, res) => {
         console.log(`GET /doctors/${req.params.id}/goodparent`);
-        res.status(501).send();
+        
+        let num_companions = 0;
+        let num_companions_alive = 0;
+        Doctor.findById(req.params.id)
+            .then(data => {
+                return Companion.find({"doctors": req.params.id})
+            })
+            .catch(err => {
+                res.status(404).send(err);
+                return;
+            })
+            .then(data => {
+                num_companions = data.length;
+                return Companion.find({"doctors": req.params.id, "alive": true})
+            })
+            .catch(err => {
+                res.status(200).send(false);
+                return;
+            })
+            .then(data => {
+                num_companions_alive = data.length;
+                console.log(num_companions)
+                console.log(num_companions_alive)
+                if (num_companions > num_companions_alive) {
+                    res.status(200).send(false);
+                }
+                else {
+                    res.status(200).send(true)
+                }
+            })
+            .catch(err => {
+                res.status(200).send(false);
+            })
     });
 
 // optional:
@@ -97,6 +143,7 @@ router.route("/doctors/favorites/:doctor_id")
 router.route("/companions")
     .get((req, res) => {
         console.log("GET /companions");
+
         // already implemented:
         Companion.find({})
             .then(data => {
@@ -131,7 +178,14 @@ router.route("/companions/favorites")
 router.route("/companions/:id")
     .get((req, res) => {
         console.log(`GET /companions/${req.params.id}`);
-        res.status(501).send();
+
+        Companion.findById(req.params.id)
+            .then(data => {
+                res.status(200).send(data);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
     })
     .patch((req, res) => {
         console.log(`PATCH /companions/${req.params.id}`);

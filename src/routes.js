@@ -47,7 +47,21 @@ router.route("/doctors")
     })
     .post((req, res) => {
         console.log("POST /doctors");
-        res.status(501).send();
+
+        // seasons init as empty list with schema, hard code server side check for seasons input
+        if (!req.body.seasons) {
+            res.status(500).send();
+            return;
+        }
+        
+        Doctor.insertMany([req.body])
+            .then(data => {
+                
+                res.status(201).send(data[0]);
+            })
+            .catch(err => {
+                res.status(500).send(err);
+            })
     });
 
 // optional:
@@ -75,11 +89,25 @@ router.route("/doctors/:id")
     })
     .patch((req, res) => {
         console.log(`PATCH /doctors/${req.params.id}`);
-        res.status(501).send();
+
+        Doctor.findByIdAndUpdate(req.params.id, req.body, {new: true})
+            .then(data => {
+                res.status(200).send(data);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
     })
     .delete((req, res) => {
         console.log(`DELETE /doctors/${req.params.id}`);
-        res.status(501).send();
+
+        Doctor.findByIdAndDelete(req.params.id)
+            .then(data => {
+                res.status(200).send(null);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
     });
     
 router.route("/doctors/:id/companions")
@@ -120,8 +148,6 @@ router.route("/doctors/:id/goodparent")
             })
             .then(data => {
                 num_companions_alive = data.length;
-                console.log(num_companions)
-                console.log(num_companions_alive)
                 if (num_companions > num_companions_alive) {
                     res.status(200).send(false);
                 }
@@ -156,7 +182,14 @@ router.route("/companions")
     })
     .post((req, res) => {
         console.log("POST /companions");
-        res.status(501).send();
+
+        Companion.insertMany([req.body])
+            .then(data => {
+                res.status(201).send(data[0]);
+            })
+            .catch(err => {
+                res.status(500).send(err);
+            })
     });
 
 router.route("/companions/crossover")
@@ -197,11 +230,25 @@ router.route("/companions/:id")
     })
     .patch((req, res) => {
         console.log(`PATCH /companions/${req.params.id}`);
-        res.status(501).send();
+
+        Companion.findByIdAndUpdate(req.params.id, req.body, {new: true})
+            .then(data => {
+                res.status(200).send(data);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
     })
     .delete((req, res) => {
         console.log(`DELETE /companions/${req.params.id}`);
-        res.status(501).send();
+
+        Companion.findByIdAndDelete(req.params.id)
+            .then(data => {
+                res.status(200).send(null);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
     });
 
 router.route("/companions/:id/doctors")

@@ -6,6 +6,7 @@ const Companion = require("./schema/Companion");
 const Doctor = require("./schema/Doctor");
 
 const express = require("express");
+const { map } = require("..");
 const router = express.Router();
 
 
@@ -161,7 +162,14 @@ router.route("/companions")
 router.route("/companions/crossover")
     .get((req, res) => {
         console.log(`GET /companions/crossover`);
-        res.status(501).send();
+
+        Companion.find({"doctors.1": {"$exists": true}})
+            .then(data => {
+                res.status(200).send(data);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
     });
 
 // optional:
@@ -199,13 +207,41 @@ router.route("/companions/:id")
 router.route("/companions/:id/doctors")
     .get((req, res) => {
         console.log(`GET /companions/${req.params.id}/doctors`);
-        res.status(501).send();
+
+        Companion.findById(req.params.id)
+            .then(data => {
+                return Promise.all(data.doctors.map(id => Doctor.findById(id)));
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
+            .then(values => {
+                res.status(200).send(values);
+            })
+            .catch(err => {
+                res.status(501).send(err);
+            })
     });
 
 router.route("/companions/:id/friends")
     .get((req, res) => {
         console.log(`GET /companions/${req.params.id}/friends`);
-        res.status(501).send();
+
+        Companion.findById(req.params.id)
+            .then(data => {
+                //{$or: [{"seasons": data.seasons[0]}, {"seasons": data.seasons[0]}, ...]}
+                return Companion.find({"_id": {$ne: req.params.id} , $or: data.seasons.map(season => {
+                    let object = {};
+                    object["seasons"] = season;
+                    return object
+                })})
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            })
+            .then(values => {
+                res.status(200).send(values);
+            })
     });
 
 // optional:
